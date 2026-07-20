@@ -3,6 +3,10 @@
 How this team builds REST endpoints. Apply on every endpoint change.
 
 - All resources live under the `/api/` path prefix.
+- The path segment is named for the domain/service, not the entity type:
+  `@Path("catalog")` for the catalog service (as inventory exposes
+  `/api/inventory`) — never `@Path("products")` after the `Product` record.
+  The spec's stated path is authoritative; do not re-derive it from the model.
 - Resource classes end in `Resource`, live in `com.demo.<domain>`, and use
   constructor injection only — never field injection (`@Inject` on fields).
 - Request/response bodies are records or simple POJOs serialized with
