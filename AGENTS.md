@@ -15,6 +15,10 @@ the user to restate them in prompts.
 
 ## Workflow
 
+Feature work follows spec-driven development. Before running any
+`/speckit.*` command, consult the `spec-driven-workflow` skill for the
+command order and the artifacts each phase must produce.
+
 1. Read the active spec in `specs/` (the user names it; otherwise the most
    recent non-TEMPLATE file).
 2. Consult every skill in `.opencode/skills/` before writing code.
