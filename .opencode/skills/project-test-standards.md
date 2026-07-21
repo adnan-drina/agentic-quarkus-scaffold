@@ -4,6 +4,12 @@ How this team tests. Apply on every change.
 
 - Every REST endpoint gets a `@QuarkusTest` with RestAssured covering the
   happy path and at least one failure path.
+- Every service ships a `HealthResourceTest` asserting `/q/health` returns
+  200 with `status: UP` — the platform probes depend on it.
+- List endpoints assert both content and size, leveraging the
+  repository's deterministic seed order:
+  `.body("itemId", contains("329299", "329199", "165613"))` plus
+  `.body("$", hasSize(3))`. (Reference: `coolstore-inventory-service`.)
 - Test names describe behavior (`returnsNotFoundForUnknownClaim`), not
   methods (`testGet2`).
 - Never weaken an assertion, delete a test, or raise a threshold to make a

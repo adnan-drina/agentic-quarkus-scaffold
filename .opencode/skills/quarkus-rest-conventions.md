@@ -9,8 +9,23 @@ How this team builds REST endpoints. Apply on every endpoint change.
   The spec's stated path is authoritative; do not re-derive it from the model.
 - Resource classes end in `Resource`, live in `com.demo.<domain>`, and use
   constructor injection only — never field injection (`@Inject` on fields).
-- Request/response bodies are records or simple POJOs serialized with
-  Jackson; never expose entities directly.
+- Request/response bodies are Java records serialized with Jackson; never
+  expose entities directly. Each distinct response shape gets its own
+  record — a projection like an availability summary is its own record
+  (`InventoryAvailability(itemId, available, quantity)`), not a trimmed
+  reuse of the entity. (Reference: `coolstore-inventory-service`.)
+- In-memory repositories are `@ApplicationScoped` beans holding a
+  `LinkedHashMap` keyed by the business id — insertion order makes list
+  responses and their tests deterministic. Lookups return
+  `Optional<T>`; list methods return immutable snapshots
+  (`List.copyOf(...)`). Seed data lives in the repository constructor.
+- Resources convert an empty `Optional` to 404 in exactly one private
+  helper (`requireItem(itemId)`) that throws
+  `jakarta.ws.rs.NotFoundException` with a descriptive message — no
+  duplicated orElseThrow chains per endpoint. Use `@ServerExceptionMapper`
+  (below) when the spec requires an RFC-7807 body on top of the 404.
+- Projections of a resource are sub-paths of it:
+  `/api/inventory/{itemId}/availability`, not a new top-level path.
 - Errors return RFC-7807-style JSON (`status`, `title`, `detail`) with
   `Content-Type: application/problem+json` — no empty catch blocks, no
   stack traces in responses. Map exceptions with the Quarkus-native
@@ -39,4 +54,10 @@ How this team builds REST endpoints. Apply on every endpoint change.
   `System.out.println` is forbidden.
 - Every endpoint gets an OpenAPI-visible description: meaningful method
   names, `@Produces`/`@Consumes` declared explicitly.
+- `application.properties` always sets `quarkus.application.name` (and
+  keeps `quarkus.http.port=8080`).
 - Update the README API table in the same change as any endpoint change.
+  The README follows the reference layout: a Technology table, the API
+  table with base path, and JSON examples of each resource shape. The
+  service root (`/`) serves a small `META-INF/resources/index.html`
+  landing page linking every endpoint.
