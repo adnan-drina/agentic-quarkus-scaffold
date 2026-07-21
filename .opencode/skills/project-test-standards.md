@@ -29,6 +29,47 @@ How this team tests. Apply on every change.
   ```
 - External HTTP dependencies are mocked in tests with WireMock — the
   canonical dependency is `org.wiremock:wiremock` in `test` scope; tests
-  must pass with no live downstream service available.
+  must pass with no live downstream service available. Beware: the
+  artifact moved to `org.wiremock` but the **packages are still
+  `com.github.tomakehurst.wiremock.*`** — and WireMock's JUnit5
+  extension does not integrate with `@QuarkusTest` configuration. The
+  only supported pattern here is a `QuarkusTestResourceLifecycleManager`
+  that starts WireMock and overrides the client's config property:
+
+  ```java
+  import com.github.tomakehurst.wiremock.WireMockServer;
+  import io.quarkus.test.common.QuarkusTestResourceLifecycleManager;
+  import java.util.Map;
+
+  public class InventoryWireMockResource implements QuarkusTestResourceLifecycleManager {
+      private WireMockServer server;
+
+      @Override
+      public Map<String, String> start() {
+          server = new WireMockServer(0);  // random free port
+          server.start();
+          return Map.of("catalog.inventory.url", server.baseUrl());
+      }
+
+      @Override
+      public void stop() { if (server != null) server.stop(); }
+  }
+  ```
+
+  Annotate the test class with
+  `@QuarkusTestResource(InventoryWireMockResource.class)` (plus
+  `@QuarkusTest`), keep a static reference or re-register stubs per
+  test, and stub with the static DSL from
+  `com.github.tomakehurst.wiremock.client.WireMock`:
+
+  ```java
+  server.stubFor(get(urlEqualTo("/api/inventory/329299/availability"))
+      .willReturn(okJson("{\"itemId\":\"329299\",\"available\":true,\"quantity\":35}")));
+  server.stubFor(get(urlPathMatching("/api/inventory/999999/.*"))
+      .willReturn(aResponse().withStatus(404)));
+  // timeout path: delay beyond the client timeout
+  server.stubFor(get(urlPathMatching("/api/inventory/165613/.*"))
+      .willReturn(okJson("{}").withFixedDelay(3000)));
+  ```
 - `mvn -q test` must pass locally before any push; the platform pipeline's
   SonarQube gate fails on any new issue.
