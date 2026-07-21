@@ -9,6 +9,20 @@ How this team builds REST endpoints. Apply on every endpoint change.
   The spec's stated path is authoritative; do not re-derive it from the model.
 - Resource classes end in `Resource`, live in `com.demo.<domain>`, and use
   constructor injection only — never field injection (`@Inject` on fields).
+  SonarQube flags `@Inject` fields as a new issue, which fails the
+  pipeline quality gate. The pattern:
+
+  ```java
+  public class CatalogResource {
+      private final ProductRepository repository;
+
+      public CatalogResource(ProductRepository repository) {
+          this.repository = repository;
+      }
+  }
+  ```
+
+  (No `@Inject` needed on a single constructor — CDI resolves it.)
 - Request/response bodies are Java records serialized with Jackson; never
   expose entities directly. Each distinct response shape gets its own
   record — a projection like an availability summary is its own record
@@ -61,3 +75,10 @@ How this team builds REST endpoints. Apply on every endpoint change.
   table with base path, and JSON examples of each resource shape. The
   service root (`/`) serves a small `META-INF/resources/index.html`
   landing page linking every endpoint.
+- Gate hygiene before declaring any change done: the pipeline's
+  SonarQube gate fails on **any** new issue, including minor smells.
+  After the tests pass, do a final pass over every file you touched and
+  remove unused imports, dead code, and leftover debugging artifacts —
+  edit-cycle leftovers (an import kept after switching to a string
+  literal, a class that is no longer referenced) are the most common
+  gate failures.

@@ -23,7 +23,9 @@ feature directory and verify before finishing.
 - **tasks**: `tasks.md` with ordered, individually verifiable items;
   tests are first-class tasks, not an afterthought.
 - **implement**: source and tests per `tasks.md`, then `mvn -q test`
-  green before reporting done.
+  green, then a gate-hygiene pass over every touched file (unused
+  imports, dead code, field injection — the pipeline gate fails on any
+  new issue) before reporting done.
 
 ## Writing specs (specify phase)
 
