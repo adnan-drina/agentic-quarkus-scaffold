@@ -28,7 +28,12 @@ feature directory and verify before finishing.
 - **implement**: source and tests per `tasks.md`, then `mvn -q test`
   green, then a gate-hygiene pass over every touched file (unused
   imports, dead code, field injection — the pipeline gate fails on any
-  new issue) before reporting done.
+  new issue) before reporting done. Execute one task at a time in
+  order, and tick its checkbox in `tasks.md` immediately after its
+  verification passes — never batch checkbox updates at the end. If a
+  session is interrupted, the checkboxes are the source of truth: on
+  resume, reconcile them against the actual file tree before writing
+  any code.
 
 ## Writing specs (specify phase)
 
