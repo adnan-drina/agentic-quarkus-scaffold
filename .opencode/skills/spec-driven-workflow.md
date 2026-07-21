@@ -21,7 +21,10 @@ feature directory and verify before finishing.
   `data-model.md`, `quickstart.md`, `contracts/` with the API contract.
   A filled `plan.md` alone is not a completed plan phase.
 - **tasks**: `tasks.md` with ordered, individually verifiable items;
-  tests are first-class tasks, not an afterthought.
+  tests are first-class tasks, not an afterthought. Every library any
+  task uses (runtime or test — REST client, WireMock, …) must have an
+  explicit setup task adding its `pom.xml` dependency; a task list that
+  references a library nothing installs will fail at implement time.
 - **implement**: source and tests per `tasks.md`, then `mvn -q test`
   green, then a gate-hygiene pass over every touched file (unused
   imports, dead code, field injection — the pipeline gate fails on any

@@ -27,5 +27,8 @@ How this team tests. Apply on every change.
   //     jsonConfig().numberReturnType(BIG_DECIMAL));
   .body("price", comparesEqualTo(new BigDecimal("10.00")))
   ```
+- External HTTP dependencies are mocked in tests with WireMock — the
+  canonical dependency is `org.wiremock:wiremock` in `test` scope; tests
+  must pass with no live downstream service available.
 - `mvn -q test` must pass locally before any push; the platform pipeline's
   SonarQube gate fails on any new issue.
