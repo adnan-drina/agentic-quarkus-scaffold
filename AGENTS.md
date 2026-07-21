@@ -28,7 +28,13 @@ command order and the artifacts each phase must produce.
 
 ## Build and test commands
 
+The container's default Java is 17 but this project targets 21. The base
+image provides `JAVA_HOME_21` (the documented way to select a JDK) — set
+it once per shell before any Maven command:
+
 ```bash
+export JAVA_HOME="${JAVA_HOME_21}" && export PATH="${JAVA_HOME}/bin:${PATH}"
+
 mvn quarkus:dev          # dev mode with hot reload
 mvn -q test              # unit + component tests
 mvn -q package           # full build (what the platform pipeline runs)
