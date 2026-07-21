@@ -49,21 +49,32 @@ commands:
       commandLine: |
         PROJECT_DIR="${PROJECT_SOURCE:-$(ls -d /projects/* 2>/dev/null | head -1)}"
         PROFILE="$(basename "${PROJECT_DIR}")"
-        java21_home="${JAVA_HOME:-}"
-        if [ -z "${java21_home}" ] || [ ! -x "${java21_home}/bin/java" ]; then
-          for candidate in \
-            "${HOME}/.sdkman/candidates/java/21.0.5-tem" \
-            /home/tooling/.sdkman/candidates/java/21.0.5-tem \
-            /usr/lib/jvm/java-21-openjdk; do
-            if [ -x "${candidate}/bin/java" ]; then
-              java21_home="${candidate}"
-              break
-            fi
-          done
-        fi
+        # Require an actual Java 21: the inherited JAVA_HOME points at
+        # sdkman's `current`, which the tooling image links to Java 17 —
+        # trusting any executable java here shipped dev mode on 17 while the
+        # pom targets 21 (UnsupportedClassVersionError on first hot reload).
+        java21_home=""
+        for candidate in \
+          "${JAVA_HOME:-}" \
+          "${HOME}/.sdkman/candidates/java/21.0.5-tem" \
+          /home/tooling/.sdkman/candidates/java/21.0.5-tem \
+          /usr/lib/jvm/java-21-openjdk; do
+          if [ -n "${candidate}" ] && [ -x "${candidate}/bin/java" ] \
+            && "${candidate}/bin/java" -version 2>&1 | head -1 | grep -q '"21'; then
+            java21_home="${candidate}"
+            break
+          fi
+        done
         if [ -n "${java21_home}" ] && [ -x "${java21_home}/bin/java" ]; then
           export JAVA_HOME="${java21_home}"
           export PATH="${JAVA_HOME}/bin:${PATH}"
+          # Repoint sdkman's `current` so every shell, devfile task, and
+          # agent subprocess (they all inherit JAVA_HOME=.../current)
+          # resolves to Java 21 without needing per-command exports.
+          sdk_current="/home/tooling/.sdkman/candidates/java/current"
+          if [ -L "${sdk_current}" ] && [ "$(readlink "${sdk_current}")" != "${java21_home}" ]; then
+            ln -sfn "${java21_home}" "${sdk_current}" 2>/dev/null || true
+          fi
           for rc in "${HOME}/.bashrc" "${HOME}/.zshrc"; do
             touch "${rc}"
             if ! grep -q "rhoai3-coding-demo: java 21 default" "${rc}"; then
